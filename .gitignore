@@ -1,4 +1,4 @@
-# Virtual Environment
+#  Virtual Environment
 venv/
 .venv/
 
@@ -13,7 +13,7 @@ __pycache__/
 instance/
 .flaskenv
 
-# Uploads and Results
+# Uploads and Results (ensure these are ignored too)
 uploads/
 results/
 
