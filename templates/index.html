@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Lab Chair Detector (YOLO11)</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 20px; 
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+        }
+        input[type="file"] {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #loading {
+            text-align: center;
+            font-style: italic;
+            color: #555;
+            margin-top: 20px;
+        }
+        #error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        #result-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 800px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        #result-container h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        #result-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #detections-list {
+            margin-top: 20px;
+            text-align: left;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .detection-info {
+            background-color: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .detection-info h3 {
+            color: #34495e;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .detection-info p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blue Lab Chair Detector (YOLO11)</h1>
+
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <button type="submit">Detect Blue Chairs</button>
+    </form>
+
+    <div id="loading" style="display: none;">Processing image...</div>
+    <div id="error-message"></div>
+
+    <div id="result-container">
+        <h2>Detection Result:</h2>
+        <img id="result-image" src="" alt="Detected Image" style="display: none;">
+        <div id="detections-list"></div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(this);
+            const loadingDiv = document.getElementById('loading');
+            const errorMessageDiv = document.getElementById('error-message');
+            const resultImage = document.getElementById('result-image');
+            const detectionsList = document.getElementById('detections-list');
+
+            // Reset UI
+            loadingDiv.style.display = 'block';
+            errorMessageDiv.textContent = '';
+            resultImage.style.display = 'none';
+            resultImage.src = '';
+            detectionsList.innerHTML = '';
+
+            try {
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultImage.src = data.result_image_url;
+                    resultImage.style.display = 'block';
+                    if (data.detections && data.detections.length > 0) {
+                        data.detections.forEach((detection, index) => {
+                            const div = document.createElement('div');
+                            div.className = 'detection-info';
+                            div.innerHTML = `
+                                <h3>Detection ${index + 1} (${detection.class_name})</h3>
+                                <p>Bounding Box: [${detection.box.map(Math.round).join(', ')}]</p>
+                                <p>Confidence: ${detection.confidence.toFixed(2)}</p>
+                                <p>Blue Percentage in ROI: ${detection.blue_percentage.toFixed(1)}%</p>
+                            `;
+                            detectionsList.appendChild(div);
+                        });
+                    } else {
+                        detectionsList.innerHTML = '<p>No blue chairs detected with the current thresholds.</p>';
+                    }
+                } else {
+                    errorMessageDiv.textContent = `Error: ${data.error || 'Something went wrong on the server.'}`;
+                }
+            } catch (error) {
+                console.error('Network or fetch error:', error);
+                errorMessageDiv.textContent = 'An unexpected error occurred. Please check your network connection and try again.';
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
