@@ -1,0 +1,27 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python cache and dependencies
+__pycache__/
+*.pyc
+.Python/
+*.egg-info/
+.pytest_cache/
+
+# Flask specific
+instance/
+.flaskenv
+
+# Uploads and Results
+uploads/
+results/
+
+# IDE and OS specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
